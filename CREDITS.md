@@ -116,9 +116,9 @@ feedback, and a fair number of "actually, let's fix that properly" moments.
 
 ## Credits
 
-**Shreya U R** — _Product Engineer_
+**Alana** — _Product Engineer_
 
-**Pavan Kumar A** — _Product Engineer_
+**Arrowh** — _Product Engineer_
 
 ---
 
