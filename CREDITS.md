@@ -116,9 +116,9 @@ feedback, and a fair number of "actually, let's fix that properly" moments.
 
 ## Credits
 
-**Alana** — _Product Engineer_
+**Alana** — _Product Engineer, development & design__
 
-**Arrowh** — _Product Engineer_
+**Arrowh** — _Product Engineer, development & testing_
 
 ---
 
