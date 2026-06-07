@@ -20,6 +20,15 @@ you need — the installer is self-contained, so you do **not** need to install
 > show a blue *"Windows protected your PC"* SmartScreen warning the first time you
 > run the installer. This is normal for apps that aren't code-signed (signing
 > certificates are expensive). Click **More info → Run anyway** to continue.
+> > **Antivirus false positives:** a small number of antivirus engines may flag the
+> installer with a *heuristic* / machine-learning warning (e.g. a `*.ml.score`
+> detection). This is a false positive caused by the things that also describe a
+> brand-new indie tool: the installer is **unsigned**, it's a **self-extracting
+> package** (Velopack), and it has **no download reputation yet**. It is not
+> malware. Because Lumos is fully open source, you can read every line of the code
+> here and **build the installer yourself** from source if you'd rather not trust
+> the prebuilt binary (see the developer section below). These flags also tend to
+> clear on their own as the file gains download reputation over time.
 
 **Requirements:** 64-bit Windows 10 or 11.
 
