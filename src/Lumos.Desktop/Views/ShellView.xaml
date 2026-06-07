@@ -1,0 +1,233 @@
+<UserControl x:Class="Lumos.Desktop.Views.ShellView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Lumos.Desktop.Views"
+             xmlns:vm="clr-namespace:Lumos.Desktop.ViewModels"
+             xmlns:conv="clr-namespace:Lumos.Desktop.Converters">
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <conv:StringToVisibilityConverter x:Key="StringToVisibility"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="1"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ============ SIDEBAR ============ -->
+        <Grid Grid.Column="0" Background="{StaticResource BgDeepBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Brand block -->
+            <StackPanel Grid.Row="0" Margin="20,28,20,28">
+                <TextBlock Text="LUMOS"
+                           FontFamily="{StaticResource DisplayFontFamily}"
+                           Foreground="{StaticResource AccentGoldBrush}"
+                           FontSize="22"
+                           FontWeight="Bold">
+                    <TextBlock.Effect>
+                        <DropShadowEffect Color="{StaticResource AccentGoldShadowColor}"
+                                          BlurRadius="10"
+                                          ShadowDepth="0"
+                                          Opacity="0.35"/>
+                    </TextBlock.Effect>
+                </TextBlock>
+                <TextBlock Text="// vault"
+                           Style="{StaticResource MonoLabel}"
+                           Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <!-- Nav items -->
+            <StackPanel Grid.Row="1">
+
+                <!-- Vault -->
+                <Button Style="{StaticResource GhostButton}"
+                        Command="{Binding ShowVaultCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"
+                        Margin="12,2"
+                        BorderThickness="0">
+                    <Button.Resources>
+                        <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsVaultActive}" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                    <Setter Property="Background" Value="#1A4A7DBF"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Resources>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="22"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="◆" FontFamily="{StaticResource MonoFontFamily}"
+                                   FontSize="14"
+                                   Width="16"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="VAULT" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    </Grid>
+                </Button>
+
+                <!-- Generator -->
+                <Button Style="{StaticResource GhostButton}"
+                        Command="{Binding ShowGeneratorCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"
+                        Margin="12,2"
+                        BorderThickness="0">
+                    <Button.Resources>
+                        <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsGeneratorActive}" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                    <Setter Property="Background" Value="#1A4A7DBF"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Resources>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="22"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="⚡" FontFamily="{StaticResource MonoFontFamily}"
+                                   FontSize="14"
+                                   Width="16"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="GENERATOR" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    </Grid>
+                </Button>
+
+                <!-- Backup -->
+                <Button Style="{StaticResource GhostButton}"
+                        Command="{Binding ShowBackupCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"
+                        Margin="12,2"
+                        BorderThickness="0">
+                    <Button.Resources>
+                        <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsBackupActive}" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource AccentBlueBrush}"/>
+                                    <Setter Property="Background" Value="#1A4A7DBF"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Resources>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="22"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="↧" FontFamily="{StaticResource MonoFontFamily}"
+                                   FontSize="14"
+                                   Width="16"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="BACKUP" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    </Grid>
+                </Button>
+            </StackPanel>
+
+            <!-- Lock button at the bottom -->
+            <StackPanel Grid.Row="2" Margin="12,8,12,16" DataContext="{Binding Update}">
+
+                <!-- Update status line (only when there's a message) -->
+                <TextBlock Text="{Binding StatusMessage}"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontFamily="{StaticResource MonoFontFamily}"
+                           FontSize="10"
+                           TextWrapping="Wrap"
+                           Margin="2,0,2,8"
+                           Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisibility}}"/>
+
+                <!-- "Update now" button — only when an update is available -->
+                <Button Style="{StaticResource PrimaryButton}"
+                        Content="{Binding UpdateButtonText}"
+                        HorizontalAlignment="Stretch"
+                        Padding="12,8"
+                        MinHeight="34"
+                        FontSize="11"
+                        Margin="0,0,0,8"
+                        Command="{Binding ApplyCommand}"
+                        Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibility}}"/>
+
+                <!-- Check for updates (manual; the only network call Lumos makes) -->
+                <Button Style="{StaticResource GhostButton}"
+                        Content="CHECK FOR UPDATES"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Padding="8,6"
+                        FontSize="9"
+                        Margin="0,0,0,4"
+                        Command="{Binding CheckCommand}"/>
+
+                <!-- Current version, subtle line under the button -->
+                <TextBlock Text="{Binding CurrentVersion}"
+                           Foreground="{StaticResource TextDisabledBrush}"
+                           FontFamily="{StaticResource MonoFontFamily}"
+                           FontSize="9"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,8"/>
+
+                <!-- LOCK -->
+                <Button Style="{StaticResource PrimaryButton}"
+                        Content="🔒  LOCK"
+                        HorizontalAlignment="Stretch"
+                        Padding="20,10"
+                        MinHeight="40"
+                        Command="{Binding DataContext.LockCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Divider -->
+        <Rectangle Grid.Column="1" Fill="{StaticResource BorderBrush}" Opacity="0.5"/>
+
+        <!-- ============ ACTIVE PANE ============ -->
+        <Grid Grid.Column="2">
+            <ContentControl Content="{Binding Vault}"
+                            Visibility="{Binding IsVaultActive, Converter={StaticResource BoolToVisibility}}">
+                <ContentControl.Resources>
+                    <DataTemplate DataType="{x:Type vm:VaultViewModel}">
+                        <views:VaultView/>
+                    </DataTemplate>
+                </ContentControl.Resources>
+            </ContentControl>
+
+            <ContentControl Content="{Binding Generator}"
+                            Visibility="{Binding IsGeneratorActive, Converter={StaticResource BoolToVisibility}}">
+                <ContentControl.Resources>
+                    <DataTemplate DataType="{x:Type vm:GeneratorViewModel}">
+                        <views:GeneratorView/>
+                    </DataTemplate>
+                </ContentControl.Resources>
+            </ContentControl>
+
+            <ContentControl Content="{Binding Backup}"
+                            Visibility="{Binding IsBackupActive, Converter={StaticResource BoolToVisibility}}">
+                <ContentControl.Resources>
+                    <DataTemplate DataType="{x:Type vm:BackupViewModel}">
+                        <views:BackupView/>
+                    </DataTemplate>
+                </ContentControl.Resources>
+            </ContentControl>
+        </Grid>
+    </Grid>
+</UserControl>

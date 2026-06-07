@@ -1,0 +1,12 @@
+<UserControl x:Class="Lumos.Desktop.Views.CyberBackdrop"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             IsHitTestVisible="False"
+             Focusable="False">
+    <!-- v2 backdrop: flat near-black with a faint static grid. No animation,
+         no corner glow, no scanlines, no neon edge strips. Sharp but not sterile. -->
+    <Grid>
+        <Rectangle Fill="{StaticResource BgDeepBrush}"/>
+        <Rectangle Fill="{StaticResource GridPatternBrush}"/>
+    </Grid>
+</UserControl>

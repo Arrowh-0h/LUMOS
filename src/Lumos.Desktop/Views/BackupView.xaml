@@ -1,0 +1,321 @@
+<UserControl x:Class="Lumos.Desktop.Views.BackupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Lumos.Desktop.Views"
+             xmlns:conv="clr-namespace:Lumos.Desktop.Converters">
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <conv:StringToVisibilityConverter x:Key="StringToVisibility"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <views:CyberBackdrop/>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Width="640" Margin="0,40,0,40">
+
+                <!-- Header -->
+                <StackPanel Margin="0,0,0,24">
+                    <TextBlock Text="// BACKUP" Style="{StaticResource MonoLabel}"/>
+                    <TextBlock Text="Export &amp; Restore"
+                               Style="{StaticResource SectionHeading}"
+                               FontSize="24"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <!-- ====== IDLE ====== -->
+                <StackPanel Visibility="{Binding IsIdle, Converter={StaticResource BoolToVisibility}}">
+
+                    <!-- Encrypted export (Lumos format) -->
+                    <ContentControl Style="{StaticResource NeonCard}" Margin="0,0,0,16">
+                        <StackPanel Margin="24,20">
+                            <TextBlock Text="// ENCRYPTED · LUMOS" Style="{StaticResource MonoLabel}"/>
+                            <TextBlock Text="Lumos backup"
+                                       Style="{StaticResource SectionHeading}"
+                                       Margin="0,2,0,4"/>
+                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12"
+                                       Margin="0,0,0,14"
+                                       TextWrapping="Wrap"
+                                       Text="Encrypted with a passphrase. Best for safekeeping. Re-import with the same passphrase to restore."/>
+                            <Button Style="{StaticResource PrimaryButton}"
+                                    Content="EXPORT ENCRYPTED"
+                                    HorizontalAlignment="Left"
+                                    Padding="20,10"
+                                    Command="{Binding StartExportLumosEncryptedCommand}"/>
+                        </StackPanel>
+                    </ContentControl>
+
+                    <!-- Encrypted export (Bitwarden interop) -->
+                    <ContentControl Style="{StaticResource NeonCard}" Margin="0,0,0,16">
+                        <StackPanel Margin="24,20">
+                            <TextBlock Text="// ENCRYPTED · BITWARDEN" Style="{StaticResource MonoLabel}"/>
+                            <TextBlock Text="Bitwarden-compatible export"
+                                       Style="{StaticResource SectionHeading}"
+                                       Margin="0,2,0,4"/>
+                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12"
+                                       Margin="0,0,0,14"
+                                       TextWrapping="Wrap"
+                                       Text="Bitwarden JSON shape, wrapped in our encrypted envelope. Decrypt with the passphrase, then import into Bitwarden as plaintext JSON."/>
+                            <Button Style="{StaticResource GhostButton}"
+                                    Content="EXPORT BITWARDEN ENCRYPTED"
+                                    HorizontalAlignment="Left"
+                                    Padding="20,10"
+                                    Command="{Binding StartExportBitwardenEncryptedCommand}"/>
+                        </StackPanel>
+                    </ContentControl>
+
+                    <!-- Plaintext export (dangerous) -->
+                    <ContentControl Style="{StaticResource NeonCard}" Margin="0,0,0,16">
+                        <StackPanel Margin="24,20">
+                            <TextBlock Text="// PLAINTEXT · EXPERT" Style="{StaticResource MonoLabel}"
+                                       Foreground="{StaticResource DangerBrush}"/>
+                            <TextBlock Text="Plaintext export"
+                                       Style="{StaticResource SectionHeading}"
+                                       Foreground="{StaticResource DangerBrush}"
+                                       Margin="0,2,0,4"/>
+                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12"
+                                       Margin="0,0,0,14"
+                                       TextWrapping="Wrap"
+                                       Text="Writes every password, TOTP secret, and card number to disk in plaintext. Use only when you've decided that's acceptable risk."/>
+                            <Button Style="{StaticResource DangerGhostButton}"
+                                    Content="EXPORT PLAINTEXT…"
+                                    HorizontalAlignment="Left"
+                                    Padding="20,10"
+                                    Command="{Binding StartExportPlaintextCommand}"/>
+                        </StackPanel>
+                    </ContentControl>
+
+                    <!-- Import -->
+                    <ContentControl Style="{StaticResource NeonCard}" Margin="0,0,0,16">
+                        <StackPanel Margin="24,20">
+                            <TextBlock Text="// IMPORT" Style="{StaticResource MonoLabel}"/>
+                            <TextBlock Text="Restore from a file"
+                                       Style="{StaticResource SectionHeading}"
+                                       Margin="0,2,0,4"/>
+                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="12"
+                                       Margin="0,0,0,14"
+                                       TextWrapping="Wrap"
+                                       Text="Accepts Lumos encrypted (.lumosx), Lumos JSON, or Bitwarden plaintext JSON. Existing entries with the same title + username + URL are preserved; new entries get added."/>
+                            <Button Style="{StaticResource PrimaryButton}"
+                                    Content="IMPORT FILE…"
+                                    HorizontalAlignment="Left"
+                                    Padding="20,10"
+                                    Command="{Binding StartImportCommand}"/>
+                        </StackPanel>
+                    </ContentControl>
+
+                </StackPanel>
+
+                <!-- ====== ENCRYPTED EXPORT — PASSPHRASE PROMPT ====== -->
+                <ContentControl Style="{StaticResource NeonCard}"
+                                Visibility="{Binding IsExportEncryptedPrompt, Converter={StaticResource BoolToVisibility}}"
+                                Margin="0,0,0,16">
+                    <StackPanel Margin="24,20">
+                        <TextBlock Text="// ENCRYPTED EXPORT" Style="{StaticResource MonoLabel}"/>
+                        <TextBlock Text="Choose an export passphrase"
+                                   Style="{StaticResource SectionHeading}"
+                                   Margin="0,2,0,4"/>
+                        <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12"
+                                   Margin="0,0,0,14"
+                                   TextWrapping="Wrap"
+                                   Text="At least 8 characters. You'll need this exact passphrase to restore — Lumos can't recover it. Write it down somewhere safe before continuing."/>
+
+                        <TextBlock Text="PASSPHRASE" Style="{StaticResource MonoLabel}" Margin="0,0,0,6"/>
+                        <TextBox Style="{StaticResource LumosTextBox}"
+                                 Text="{Binding Passphrase, UpdateSourceTrigger=PropertyChanged}"
+                                 FontFamily="{StaticResource MonoFontFamily}"
+                                 Margin="0,0,0,12"/>
+
+                        <TextBlock Text="CONFIRM PASSPHRASE" Style="{StaticResource MonoLabel}" Margin="0,0,0,6"/>
+                        <TextBox Style="{StaticResource LumosTextBox}"
+                                 Text="{Binding PassphraseConfirm, UpdateSourceTrigger=PropertyChanged}"
+                                 FontFamily="{StaticResource MonoFontFamily}"
+                                 Margin="0,0,0,12"/>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource GhostButton}"
+                                    Content="CANCEL"
+                                    Margin="0,0,8,0"
+                                    Command="{Binding CancelEncryptedExportCommand}"/>
+                            <Button Style="{StaticResource PrimaryButton}"
+                                    Content="EXPORT…"
+                                    Padding="20,8"
+                                    Command="{Binding ConfirmEncryptedExportCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ContentControl>
+
+                <!-- ====== PLAINTEXT WARNING (step 1 of 2) ====== -->
+                <ContentControl Style="{StaticResource NeonCard}"
+                                Visibility="{Binding IsPlaintextWarning, Converter={StaticResource BoolToVisibility}}"
+                                Margin="0,0,0,16">
+                    <StackPanel Margin="24,20">
+                        <TextBlock Text="// CONFIRM" Style="{StaticResource MonoLabel}"
+                                   Foreground="{StaticResource DangerBrush}"/>
+                        <TextBlock Text="Plaintext means plaintext"
+                                   Style="{StaticResource SectionHeading}"
+                                   Foreground="{StaticResource DangerBrush}"
+                                   Margin="0,2,0,12"/>
+                        <Border Background="#332B0A12"
+                                BorderBrush="{StaticResource DangerBrush}"
+                                BorderThickness="1"
+                                Padding="14,12"
+                                Margin="0,0,0,16">
+                            <TextBlock Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MonoFontFamily}"
+                                       FontSize="12"
+                                       TextWrapping="Wrap">
+                                <Run>The file will contain every password, every TOTP secret, every card number, and every note in plaintext.</Run>
+                                <LineBreak/><LineBreak/>
+                                <Run>Anyone who reads the file has full access to your accounts. Delete it as soon as you're done.</Run>
+                            </TextBlock>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource GhostButton}"
+                                    Content="CANCEL"
+                                    Margin="0,0,8,0"
+                                    Command="{Binding CancelPlaintextExportCommand}"/>
+                            <Button Style="{StaticResource DangerGhostButton}"
+                                    Content="I UNDERSTAND, CONTINUE"
+                                    Padding="20,8"
+                                    Command="{Binding AcknowledgePlaintextWarningCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ContentControl>
+
+                <!-- ====== PLAINTEXT FINAL (step 2 of 2) ====== -->
+                <ContentControl Style="{StaticResource NeonCard}"
+                                Visibility="{Binding IsPlaintextFinal, Converter={StaticResource BoolToVisibility}}"
+                                Margin="0,0,0,16">
+                    <StackPanel Margin="24,20">
+                        <TextBlock Text="// PICK FORMAT" Style="{StaticResource MonoLabel}"/>
+                        <TextBlock Text="Plaintext export format"
+                                   Style="{StaticResource SectionHeading}"
+                                   Margin="0,2,0,12"/>
+
+                        <Button Style="{StaticResource GhostButton}"
+                                Content="LUMOS JSON (LOSSLESS)"
+                                HorizontalAlignment="Stretch"
+                                Padding="20,10"
+                                Margin="0,0,0,8"
+                                Command="{Binding ConfirmPlaintextExportLumosCommand}"/>
+                        <Button Style="{StaticResource GhostButton}"
+                                Content="BITWARDEN JSON (INTEROP)"
+                                HorizontalAlignment="Stretch"
+                                Padding="20,10"
+                                Margin="0,0,0,8"
+                                Command="{Binding ConfirmPlaintextExportBitwardenCommand}"/>
+                        <Button Style="{StaticResource GhostButton}"
+                                Content="CSV (SPREADSHEET)"
+                                HorizontalAlignment="Stretch"
+                                Padding="20,10"
+                                Margin="0,0,0,16"
+                                Command="{Binding ConfirmPlaintextExportCsvCommand}"/>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource GhostButton}"
+                                    Content="CANCEL"
+                                    Command="{Binding CancelPlaintextExportCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ContentControl>
+
+                <!-- ====== IMPORT PASSPHRASE PROMPT ====== -->
+                <ContentControl Style="{StaticResource NeonCard}"
+                                Visibility="{Binding IsImportPassphrasePrompt, Converter={StaticResource BoolToVisibility}}"
+                                Margin="0,0,0,16">
+                    <StackPanel Margin="24,20">
+                        <TextBlock Text="// IMPORT · ENCRYPTED FILE" Style="{StaticResource MonoLabel}"/>
+                        <TextBlock Text="Enter the export passphrase"
+                                   Style="{StaticResource SectionHeading}"
+                                   Margin="0,2,0,12"/>
+
+                        <TextBox Style="{StaticResource LumosTextBox}"
+                                 Text="{Binding Passphrase, UpdateSourceTrigger=PropertyChanged}"
+                                 FontFamily="{StaticResource MonoFontFamily}"
+                                 Margin="0,0,0,12"/>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource GhostButton}"
+                                    Content="CANCEL"
+                                    Margin="0,0,8,0"
+                                    Command="{Binding CancelImportCommand}"/>
+                            <Button Style="{StaticResource PrimaryButton}"
+                                    Content="DECRYPT"
+                                    Padding="20,8"
+                                    Command="{Binding SubmitImportPassphraseCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ContentControl>
+
+                <!-- ====== IMPORT PREVIEW ====== -->
+                <ContentControl Style="{StaticResource NeonCard}"
+                                Visibility="{Binding IsImportPreview, Converter={StaticResource BoolToVisibility}}"
+                                Margin="0,0,0,16">
+                    <StackPanel Margin="24,20">
+                        <TextBlock Text="// IMPORT · PREVIEW" Style="{StaticResource MonoLabel}"/>
+                        <TextBlock Text="Ready to import"
+                                   Style="{StaticResource SectionHeading}"
+                                   Margin="0,2,0,12"/>
+
+                        <Border Background="#FF050810"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1"
+                                Padding="14,10"
+                                Margin="0,0,0,12">
+                            <TextBlock Text="{Binding ImportSummary}"
+                                       Foreground="{StaticResource AccentBlueBrush}"
+                                       FontFamily="{StaticResource MonoFontFamily}"
+                                       FontSize="14"/>
+                        </Border>
+
+                        <TextBlock Text="PREVIEW (first 10):" Style="{StaticResource MonoLabel}" Margin="0,0,0,6"
+                                   Visibility="{Binding ImportSampleText, Converter={StaticResource StringToVisibility}}"/>
+                        <Border Background="#FF050810"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1"
+                                Padding="14,10"
+                                Margin="0,0,0,16"
+                                Visibility="{Binding ImportSampleText, Converter={StaticResource StringToVisibility}}">
+                            <TextBlock Text="{Binding ImportSampleText}"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MonoFontFamily}"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"/>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource GhostButton}"
+                                    Content="CANCEL"
+                                    Margin="0,0,8,0"
+                                    Command="{Binding CancelImportCommand}"/>
+                            <Button Style="{StaticResource PrimaryButton}"
+                                    Content="IMPORT"
+                                    Padding="20,8"
+                                    Command="{Binding ConfirmImportCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ContentControl>
+
+                <!-- Status / error -->
+                <TextBlock Foreground="{StaticResource AccentCyanBrush}"
+                           FontFamily="{StaticResource MonoFontFamily}"
+                           FontSize="12"
+                           Margin="4,0,0,8"
+                           Text="{Binding StatusMessage}"
+                           Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisibility}}"/>
+                <TextBlock Style="{StaticResource DangerText}"
+                           Margin="4,0,0,8"
+                           Text="{Binding ErrorMessage}"
+                           Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibility}}"/>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

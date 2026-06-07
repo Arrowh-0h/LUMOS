@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <ApplicationIcon>lumos.ico</ApplicationIcon>
+    <AssemblyName>Lumos</AssemblyName>
+    <RootNamespace>Lumos.Desktop</RootNamespace>
+
+    <!-- Use our own Program.Main so Velopack runs before WPF initializes.
+         App.xaml stays an ApplicationDefinition (so InitializeComponent and
+         the merged resource dictionaries are still generated), but pointing
+         StartupObject at Program suppresses the auto-generated Main. -->
+    <StartupObject>Lumos.Desktop.Program</StartupObject>
+
+    <!-- Product version. Bump this for each release; the installer/updater
+         (Velopack + GitHub Releases) compares versions to decide if an update
+         is available. Keep it in sync with the git tag you publish. -->
+    <Version>1.0.0</Version>
+
+    <!-- Self-contained publish settings. We DO NOT set PublishSingleFile here:
+         Velopack does the single-file packaging itself from the publish folder,
+         and PublishSingleFile fights with the native SQLite (e_sqlite3mc.dll)
+         self-extraction. Self-contained = the user needs no .NET install. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Lumos.Core\Lumos.Core.csproj" />
+  </ItemGroup>
+
+  <!-- App icon: shipped in the build output so Velopack can use it for the
+       installer and shortcuts, and referenced by ApplicationIcon (above) for
+       the exe icon Windows shows in Explorer / Start menu / taskbar. -->
+  <ItemGroup>
+    <Content Include="lumos.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="lumos_icon_256.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Microsoft.Win32.SystemEvents was moved out of the base BCL after
+         .NET Core; this package provides PowerModeChanged, SessionSwitch etc.
+         on net8.0-windows. -->
+    <PackageReference Include="Microsoft.Win32.SystemEvents" Version="8.0.0" />
+
+    <!-- DPAPI (ProtectedData) for the per-user encrypted license file. Not in
+         the base BCL on .NET 8 — needs this package. -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+
+    <!-- Velopack: installer + auto-update framework (GitHub Releases backed).
+         VelopackApp.Build().Run() in App.OnStartup handles install hooks. -->
+    <PackageReference Include="Velopack" Version="0.0.1298" />
+  </ItemGroup>
+
+  <!-- v2: Lumos is fully offline except for the explicit, user-initiated
+       update check (Velopack -> GitHub Releases). No backend, no telemetry. -->
+
+</Project>

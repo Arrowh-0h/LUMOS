@@ -1,0 +1,35 @@
+## .NET / Visual Studio
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+*.pdb
+
+## NuGet
+*.nupkg
+**/packages/
+*.lock.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Test artifacts
+TestResults/
+coverage/
+*.trx
+*.coverage
+
+## Lumos-specific: never commit real vaults or logs
+*.db
+*.db.header.json
+*.db-journal
+*.db-wal
+*.db-shm
+logs/
+
+## Build / release output (Phase 13)
+build/publish/
+build/releases/

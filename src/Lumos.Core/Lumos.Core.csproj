@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>Lumos.Core</AssemblyName>
+    <RootNamespace>Lumos.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Argon2id key derivation -->
+    <PackageReference Include="Konscious.Security.Cryptography.Argon2" Version="1.3.1" />
+
+    <!--
+      SQLite with AES-256 encryption via SQLite3 Multiple Ciphers (SQLite3MC).
+      We use Microsoft.Data.Sqlite.Core (NOT Microsoft.Data.Sqlite) so that we
+      can choose our own bundle. The .Core variant has no bundled SQLite, and
+      we add the SQLite3MC bundle, which:
+        - Ships a real encryption-capable SQLite native library
+        - Supports the SQLCipher v4 wire format (PRAGMA cipher = 'sqlcipher')
+        - Is actively maintained and free for commercial use
+        - Honours the connection-string Password keyword so we never have to
+          embed the key as plaintext in a PRAGMA statement
+    -->
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="8.0.0" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3mc" Version="2.1.11" />
+
+    <!-- Structured logging (used by safe-log wrapper) -->
+    <PackageReference Include="Serilog" Version="4.0.0" />
+
+    <!-- Password strength estimation (Dropbox's zxcvbn, ported to C#) -->
+    <PackageReference Include="zxcvbn-core" Version="7.0.92" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Allow the test project to see internal members (e.g. RequireConnection). -->
+    <InternalsVisibleTo Include="Lumos.Core.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      EFF Large Wordlist - source: https://www.eff.org/dice
+      Place the file at Resources/eff_large_wordlist.txt before building.
+      The build will succeed without it (since EmbeddedResource missing files
+      don't error), but PasswordGenerator.GeneratePassphrase will throw at
+      first call with a clear error message telling you how to fix it.
+    -->
+    <EmbeddedResource Include="Resources\eff_large_wordlist.txt" Condition="Exists('Resources\eff_large_wordlist.txt')" />
+  </ItemGroup>
+
+</Project>
