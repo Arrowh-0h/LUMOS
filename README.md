@@ -34,7 +34,9 @@ Lumos asks for a one-time product key the first time you open it. The app is
 
 > ✉️ **p1avan.kumar.a@gmail.com**
 >
+**Or it in the product-key file**
 
+You can direst copy-paste the key or, just
 Send a quick message and I'll reply with a key in the format
 `LUMOS-XXXX-XXXX-XXXX`. Enter it once and you'll never be asked again on that
 computer.
