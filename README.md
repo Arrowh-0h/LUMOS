@@ -109,6 +109,15 @@ dotnet test tests/Lumos.Core.Tests
 
 To produce an installer, see [`docs/BUILD-AND-RELEASE.md`](docs/BUILD-AND-RELEASE.md).
 
+## License
+
+Lumos is released under the [MIT License](LICENSE) — free to use, modify, and
+redistribute. See the `LICENSE` file for the full text.
+
+It builds on excellent open-source libraries, including SQLCipher / SQLite3MC
+(vault encryption), Argon2 (key derivation), and Velopack (installer & updates).
+Those components remain under their own respective licenses.
+
 ---
 
 *Lumos is free software provided as-is, with no warranty.*
