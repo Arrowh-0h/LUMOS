@@ -1,4 +1,5 @@
 # 🔒 Lumos
+# 🌐 **Website:** <(https://lumos-app.netlify.app/)>
 
 **A free, local-first, offline password manager for Windows.**
 
