@@ -4,6 +4,58 @@ All notable changes, newest first.
 
 ---
 
+## v2.0.0 — Recovery, hardening, and the end of activation
+
+**Removed — product-key activation.** The gate, `LicenseStore`, `ActivationView`,
+`tools/keygen`, and the DPAPI (`System.Security.Cryptography.ProtectedData`)
+dependency are all gone. The app opens straight onto create-vault or unlock. Any
+leftover `license.dat` is deleted automatically on next launch. See D-V2-07 for
+why it existed and why it doesn't any more.
+
+**Added — offline recovery codes.** Vault header format v3 adds a second envelope
+wrapping the same cipher key under a generated 30-character code (~147 bits), with
+its own salt and Argon2id parameters. New vaults get a code at creation; existing
+vaults are offered one on first unlock after updating, and can decline. Resetting
+the master password with a code is instant — the database is never re-encrypted.
+No server, no escrow, no developer-held key. Full design in `docs/RECOVERY.md`.
+
+**Added — wrap authentication.** Each envelope's AES-GCM tag is now bound to its
+own KDF parameters and salt as associated data, under a per-envelope purpose
+string. Wraps can no longer be spliced between header generations, and the master
+and recovery envelopes cannot be swapped. Pre-v3 headers are upgraded in place on
+unlock, best-effort.
+
+**Added — startup diagnostics.** `Program.Main` is now guarded (it previously had
+no exception handling at all, so anything thrown before `App.OnStartup` died with
+a bare `0xE0434352` in the Windows event log). Every launch writes an environment
+banner to `crash.log` and runs a native self-test that creates, keys, writes, and
+re-reads a throwaway encrypted database — then confirms it is unreadable without
+the key. Failures name the likely cause instead of dumping a stack trace.
+
+**Changed — unlock backoff.** Extended from 10 to 100 attempts. Delay plateaus at
+60s through attempt 10, then grows 10s per attempt: attempt 100 waits 16 minutes,
+and exhausting all 100 costs roughly 13 hours. Optional self-destruct moved from
+attempt 10 to attempt 100 (still opt-in, still off by default).
+
+**Changed — attachments.** Per-file cap raised from 25 MB to 50 MB.
+
+**Added — password reveal toggle** on every master-password field, which re-masks
+itself when focus leaves the control.
+
+**Added — screen-capture blocking** (`WDA_EXCLUDEFROMCAPTURE`) while the vault is
+unlocked. Deliberately not applied to the unlock and error screens, so users can
+still screenshot a problem for a bug report.
+
+**Added — password strength coaching** on stored entries: a meter and one line of
+concrete advice. Advisory only — Lumos never blocks a save for a weak password,
+because plenty of entries are weak by necessity.
+
+**Added — ARM64 support.** Windows builds now target `win-x64` and `win-arm64`.
+
+**Rejected — 90-day forced master-password rotation.** Considered and dropped; see
+D-V2-15.
+
+---
 ## v2 direction (in progress) — "Offline-only, hardened, distributable"
 
 A deliberate pivot. v1 had a full backend (OAuth sign-in, sessions, OTP, server MFA,

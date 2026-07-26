@@ -67,8 +67,8 @@ public class Argon2KdfTests
     {
         var kdf = KdfParameters.CreateDefault();
         kdf.Validate(); // should not throw
-        Assert.Equal(64 * 1024, kdf.MemoryKb);
-        Assert.Equal(3, kdf.Iterations);
+        Assert.Equal(256 * 1024, kdf.MemoryKb);
+        Assert.Equal(4, kdf.Iterations);
         Assert.Equal(4, kdf.Parallelism);
         Assert.Equal(32, kdf.KeyLengthBytes);
         Assert.Equal(16, kdf.Salt.Length);

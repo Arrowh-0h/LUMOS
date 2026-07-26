@@ -53,7 +53,7 @@ Shell panes (v2): **VAULT / GENERATOR / BACKUP**. (ACCOUNT removed with the back
 ├── vault.db              SQLCipher-encrypted SQLite (the vault) — ciphertext at rest
 ├── vault.db.header.json  KDF params + wrapped vault key; must travel with vault.db
 ├── crash.log             global exception log; safe to delete
-└── (license file, added Phase 15)
+└── (crash.log, written on unhandled errors)
 ```
 No backend dir, no session file, no logs containing user data.
 

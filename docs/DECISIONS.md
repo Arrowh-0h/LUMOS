@@ -30,16 +30,39 @@ dotnet tool. Build via build/release.ps1; see docs/BUILD-AND-RELEASE.md.
 Publish only the compiled installer. Source stays private. Note: .NET IL decompiles
 cleanly (ILSpy), so "source private" is not "logic secret" — relevant to D-V2-07.
 
-**D-V2-07 — Product key is "feels official," not anti-piracy — LOCKED**
-User emails for a key; entering it activates for life; stored encrypted locally; hashed
-check baked into the build and obfuscated. ACCEPTED LIMITATION: any client-side license
-check is bypassable by a determined reverse-engineer. Fine for a free product; documented
-rather than hidden.
-Phase 15 detail: format LUMOS-XXXX-XXXX-XXXX; offline HMAC partial-signature (8-char
-serial + 4-char truncated HMAC-SHA256 under a baked-in secret). Blocks on first launch
-until valid; stored DPAPI-encrypted per-user at %APPDATA%\Lumos\license.dat, re-validated
-each launch. Keys issued via private tools/keygen. Secret is a single constant — change it
-to retire a batch. Full writeup in docs/LICENSING.md.
+**D-V2-07 — Product key is "feels official," not anti-piracy — SUPERSEDED by D-V2-14 (v2)**
+Kept on record rather than deleted: it happened, and the reasoning is worth remembering.
+User emailed for a key; entering it activated for life; stored DPAPI-encrypted per-user at
+%APPDATA%\Lumos\license.dat; format LUMOS-XXXX-XXXX-XXXX (8-char serial + 4-char truncated
+HMAC-SHA256 under a baked-in secret). ACCEPTED LIMITATION at the time: any client-side
+license check is bypassable by a determined reverse-engineer.
+WHY IT WAS REMOVED: for a free, MIT-licensed, open-source app the gate bought nothing and
+cost real friction — it blocked first launch, required the author to hand out keys by
+email, and sat awkwardly against the project's own claim to be FOSS. Community feedback
+(GitHub user GNUthulu) raised the same tension. The gate had no bearing on vault security
+either way, so removing it weakened nothing.
+
+**D-V2-14 — Offline recovery codes, no escrow — LOCKED (v2)**
+Replaces D-V2-07's slot in the codebase (the activation gate came out; recovery went in).
+A generated 30-character code (~147 bits) wraps the same cipher key the master password
+wraps, in a second envelope with its own salt and Argon2id parameters. Either secret opens
+the vault; neither produces the other.
+REJECTED ALTERNATIVES, and why: stored facial identity (the template and the matching code
+both sit on the attacker's disk, so the vault becomes decryptable without the password);
+user-chosen word + passphrase (structurally right, but far lower entropy than a master
+password, so it becomes the cheapest way in); developer-issued unlock token (either useless,
+if it cannot carry key material, or a backdoor into every vault if it can).
+ACCEPTED CONSEQUENCE: lose both the master password and the recovery code and the data is
+unrecoverable by anyone, including the authors. Stated plainly to users rather than softened.
+Full writeup in docs/RECOVERY.md.
+
+**D-V2-15 — Reject forced periodic master-password rotation — LOCKED (v2)**
+Considered for v2 and dropped. NIST SP 800-63B recommends against scheduled rotation, and
+Microsoft removed it from the Windows baselines, for the same reason: people respond by
+incrementing a digit and writing it down. Applying that to the single credential the whole
+vault depends on would make it weaker, not stronger. Rotation on signal (suspected
+compromise, lost device) remains the right trigger, and password change is now instant
+because only the wrapped key is rewritten.
 
 **D-V2-08 — UI: black-dominant, sharp, low-glow — LOCKED (details in Phase 11)**
 Palette: black (dominant) + red + grey + blue + gold accents. Drop cyan. Sharp edges,

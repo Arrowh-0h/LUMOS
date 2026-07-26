@@ -26,9 +26,15 @@
          Velopack does the single-file packaging itself from the publish folder,
          and PublishSingleFile fights with the native SQLite (e_sqlite3mc.dll)
          self-extraction. Self-contained = the user needs no .NET install. -->
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- Both architectures are supported. RuntimeIdentifiers (plural) declares
+         what we can target; the conditional RuntimeIdentifier below keeps a
+         plain `dotnet build` working by defaulting to x64 when none is given.
+         Without that default, every build would have to name a RID explicitly,
+         because SelfContained requires one. -->
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>AnyCPU;x64;ARM64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -52,10 +58,6 @@
          .NET Core; this package provides PowerModeChanged, SessionSwitch etc.
          on net8.0-windows. -->
     <PackageReference Include="Microsoft.Win32.SystemEvents" Version="8.0.0" />
-
-    <!-- DPAPI (ProtectedData) for the per-user encrypted license file. Not in
-         the base BCL on .NET 8 — needs this package. -->
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
 
     <!-- Velopack: installer + auto-update framework (GitHub Releases backed).
          VelopackApp.Build().Run() in App.OnStartup handles install hooks. -->

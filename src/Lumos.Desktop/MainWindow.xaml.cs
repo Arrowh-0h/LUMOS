@@ -15,32 +15,9 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Loaded += (_, _) => RouteInitialView();
+        Loaded += (_, _) => RouteVaultView();
         StateChanged += OnStateChanged;
         Closed += (_, _) => TearDownShell();
-    }
-
-    private readonly LicenseStore _license = new();
-
-    /// <summary>
-    /// First gate: require product-key activation. Once activated (now or
-    /// previously), fall through to the normal create/unlock routing.
-    /// </summary>
-    private void RouteInitialView()
-    {
-        if (!_license.IsActivated())
-        {
-            ShowActivation();
-            return;
-        }
-        RouteVaultView();
-    }
-
-    private void ShowActivation()
-    {
-        var vm = new ActivationViewModel(_license);
-        vm.Activated += (_, _) => RouteVaultView();
-        MainContent.Content = new ActivationView { DataContext = vm };
     }
 
     /// <summary>
@@ -62,17 +39,81 @@ public partial class MainWindow : Window
     private void ShowUnlock()
     {
         var vm = new UnlockViewModel();
-        vm.VaultUnlocked += (_, _) => ShowShell();
+        vm.VaultUnlocked += OnVaultUnlocked;
+        vm.ForgotPasswordRequested += (_, _) => ShowRecoveryReset();
         var view = new UnlockView { DataContext = vm };
         MainContent.Content = view;
+    }
+
+    private void OnVaultUnlocked(object? sender, VaultUnlockedEventArgs e)
+    {
+        // A vault with no recovery code gets the one-time explainer before the
+        // shell. This can only happen here: writing the recovery wrap needs the
+        // cipher key, which needs the master password, which only exists at
+        // unlock time.
+        if (e.RequiresRecoverySetup)
+        {
+            ShowRecoverySetupPrompt();
+            return;
+        }
+        ShowShell();
     }
 
     private void ShowCreateVault()
     {
         var vm = new CreateVaultViewModel();
-        vm.VaultCreated += (_, _) => ShowShell();
+        vm.VaultCreated += OnVaultCreated;
         var view = new CreateVaultView { DataContext = vm };
         MainContent.Content = view;
+    }
+
+    private void OnVaultCreated(object? sender, VaultCreatedEventArgs e)
+    {
+        // The code was issued during creation, while the master password was
+        // still in hand. If that failed, the vault is still fine — go straight
+        // to the shell and prompt again at the next unlock.
+        if (e.RecoveryCode is null)
+        {
+            ShowShell();
+            return;
+        }
+        ShowRecoveryCode(e.RecoveryCode, isNewVault: true);
+    }
+
+    // -------- Recovery flows --------
+
+    /// <summary>
+    /// The one-time migration prompt for vaults that predate recovery codes.
+    /// Declining is a real option: locking someone out of their own vault with
+    /// a nag screen is worse than letting them postpone.
+    /// </summary>
+    private void ShowRecoverySetupPrompt()
+    {
+        var vm = new RecoverySetupPromptViewModel();
+        vm.RecoveryIssued += (_, args) => ShowRecoveryCode(args.Code, isNewVault: false);
+        vm.Deferred += (_, _) => ShowShell();
+        MainContent.Content = new RecoverySetupPromptView { DataContext = vm };
+    }
+
+    /// <summary>
+    /// Display a freshly issued recovery code. This is the only time it exists
+    /// in plaintext, so the view gates Continue behind an explicit
+    /// acknowledgement.
+    /// </summary>
+    private void ShowRecoveryCode(string code, bool isNewVault)
+    {
+        var vm = new RecoveryCodeViewModel(code, new WindowsFileDialogService(), isNewVault);
+        vm.Acknowledged += (_, _) => ShowShell();
+        MainContent.Content = new RecoveryCodeView { DataContext = vm };
+    }
+
+    /// <summary>The "I forgot my master password" route, reached from the unlock screen.</summary>
+    private void ShowRecoveryReset()
+    {
+        var vm = new RecoveryResetViewModel();
+        vm.ResetSucceeded += (_, _) => ShowShell();
+        vm.Cancelled += (_, _) => ShowUnlock();
+        MainContent.Content = new RecoveryResetView { DataContext = vm };
     }
 
     private void ShowShell()
@@ -106,6 +147,12 @@ public partial class MainWindow : Window
             _shellVm.LockRequested += OnShellLockRequested;
 
             MainContent.Content = new ShellView { DataContext = _shellVm };
+
+            // Vault contents are on screen from here on — exclude the window
+            // from screenshots and screen sharing. Deliberately not applied to
+            // the unlock or error screens, so users can still capture a bug
+            // report.
+            ScreenCaptureProtection.Apply(this, enabled: true);
         }
         catch (Exception ex)
         {
@@ -134,6 +181,10 @@ public partial class MainWindow : Window
         TearDownShell();
         AppServices.OpenVault?.Dispose();
         AppServices.OpenVault = null;
+
+        // Nothing sensitive is on screen once we're back at the unlock prompt,
+        // and leaving capture blocked there would prevent bug-report screenshots.
+        ScreenCaptureProtection.Apply(this, enabled: false);
 
         ShowUnlock();
     }

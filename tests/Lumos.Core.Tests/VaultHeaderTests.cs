@@ -33,12 +33,12 @@ public class VaultHeaderTests
         var json = VaultHeader.Build(kdf, wrapped).ToJson();
 
         Assert.Contains("\"kdfAlgorithm\": \"argon2id\"", json);
-        Assert.Contains("\"kdfMemoryKb\": 65536", json);
-        Assert.Contains("\"kdfIterations\": 3", json);
-        Assert.Contains("\"kdfParallelism\": 4", json);
+        Assert.Contains($"\"kdfMemoryKb\": {KdfParameters.DefaultMemoryKb}", json);
+        Assert.Contains($"\"kdfIterations\": {KdfParameters.DefaultIterations}", json);
+        Assert.Contains($"\"kdfParallelism\": {KdfParameters.DefaultParallelism}", json);
         Assert.Contains("\"wrappedCipherKey\":", json);
         Assert.Contains("\"cipher\": \"sqlite3mc-sqlcipher-v4\"", json);
-        Assert.Contains("\"schemaVersion\": 2", json);
+        Assert.Contains("\"schemaVersion\": 3", json);
     }
 
     [Fact]

@@ -20,6 +20,10 @@ public static class AppServices
 
     public static void Initialize()
     {
+        // Clear out files from removed features (e.g. the old activation
+        // gate's license.dat) before anything else touches the data folder.
+        LegacyCleanup.Run();
+
         VaultManager = new VaultManager(AppPaths.VaultPath);
 
         // The Windows clipboard implementation needs the UI Dispatcher, which

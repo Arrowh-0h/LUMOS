@@ -95,6 +95,12 @@ public sealed class UpdateViewModel : ObservableObject
                 case UpdateCheckStatus.NotInstalled:
                     StatusMessage = "Updates apply to the installed app only (not dev builds).";
                     break;
+                case UpdateCheckStatus.UnsupportedArchitecture:
+                    StatusMessage =
+                        "This is the ARM64 build, which updates separately. " +
+                        "Download the latest ARM64 installer from lumos-app.netlify.app " +
+                        "and run it over this install — your vault is untouched.";
+                    break;
                 default:
                     StatusMessage = $"Couldn't check for updates: {result.Error}";
                     break;

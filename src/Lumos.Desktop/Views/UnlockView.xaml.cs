@@ -10,7 +10,7 @@ public partial class UnlockView : UserControl
     public UnlockView()
     {
         InitializeComponent();
-        Loaded += (_, _) => PasswordField.Focus();
+        Loaded += (_, _) => PasswordField.FocusField();
     }
 
     private void UnlockButton_Click(object sender, RoutedEventArgs e)

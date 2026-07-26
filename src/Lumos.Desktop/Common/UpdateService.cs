@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Velopack;
 using Velopack.Sources;
@@ -17,6 +18,13 @@ public enum UpdateCheckStatus
     NotInstalled,
     /// <summary>The check failed (no network, GitHub unreachable, etc.).</summary>
     Failed,
+    /// <summary>
+    /// This build's architecture is not distributed through the update feed.
+    /// Currently ARM64: only the x64 build is published to GitHub Releases, so
+    /// an ARM64 install polling that feed would be offered an x64 package and
+    /// would overwrite itself with the wrong architecture.
+    /// </summary>
+    UnsupportedArchitecture,
 }
 
 public sealed record UpdateCheckResult(UpdateCheckStatus Status, string? NewVersion, string? Error);
@@ -46,8 +54,27 @@ public sealed class UpdateService
     /// Check GitHub for a newer release. Network call — only invoked from the
     /// user's explicit "Check for updates" action.
     /// </summary>
+    /// <summary>
+    /// True when this build must not use the GitHub update feed.
+    ///
+    /// v2.0.0 ships only the x64 installer to GitHub Releases; the ARM64 build
+    /// is distributed from the website instead. Both architectures otherwise
+    /// poll the same default Velopack channel, so an ARM64 install left to its
+    /// own devices would find the x64 release, accept it as "newer", and
+    /// replace itself with a package for the wrong CPU.
+    ///
+    /// A note in the docs is not enough protection for something that breaks a
+    /// user's installation, so the check is blocked in code and the user is
+    /// pointed at the website download instead.
+    /// </summary>
+    public static bool UpdatesAvailableForThisBuild
+        => RuntimeInformation.ProcessArchitecture != Architecture.Arm64;
+
     public async Task<UpdateCheckResult> CheckAsync()
     {
+        if (!UpdatesAvailableForThisBuild)
+            return new UpdateCheckResult(UpdateCheckStatus.UnsupportedArchitecture, null, null);
+
         try
         {
             _manager = new UpdateManager(new GithubSource(RepositoryUrl, null, false));
@@ -79,6 +106,9 @@ public sealed class UpdateService
     /// </summary>
     public async Task<string?> DownloadAndApplyAsync()
     {
+        if (!UpdatesAvailableForThisBuild)
+            return "This ARM64 build updates from the Lumos website, not from here.";
+
         if (_manager is null || _pendingUpdate is null)
             return "No update is pending. Run a check first.";
 

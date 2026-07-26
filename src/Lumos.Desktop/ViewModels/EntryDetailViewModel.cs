@@ -32,6 +32,7 @@ public sealed class EntryDetailViewModel : ObservableObject, IDisposable
     private string _editTitle = "";
     private string _editUsername = "";
     private string _editPassword = "";
+    private PasswordCoaching? _coaching;
     private string _editUrl = "";
     private string _editNotes = "";
     private string _editTotpSecret = "";
@@ -218,7 +219,31 @@ public sealed class EntryDetailViewModel : ObservableObject, IDisposable
 
     public string EditTitle    { get => _editTitle;    set => SetField(ref _editTitle, value); }
     public string EditUsername { get => _editUsername; set => SetField(ref _editUsername, value); }
-    public string EditPassword { get => _editPassword; set => SetField(ref _editPassword, value); }
+    public string EditPassword
+    {
+        get => _editPassword;
+        set
+        {
+            if (SetField(ref _editPassword, value)) RefreshCoaching();
+        }
+    }
+
+    /// <summary>zxcvbn score 0-4 for the password being edited.</summary>
+    public int EditPasswordScore => _coaching?.Score ?? 0;
+
+    /// <summary>"Weak", "Strong", etc. Empty while the field is empty.</summary>
+    public string EditPasswordStrengthLabel => _coaching?.Label ?? "";
+
+    /// <summary>Non-blocking advice for the password being edited.</summary>
+    public string EditPasswordAdvice => _coaching?.Advice ?? "";
+
+    private void RefreshCoaching()
+    {
+        _coaching = PasswordCoach.Evaluate(_editPassword);
+        OnPropertyChanged(nameof(EditPasswordScore));
+        OnPropertyChanged(nameof(EditPasswordStrengthLabel));
+        OnPropertyChanged(nameof(EditPasswordAdvice));
+    }
     public string EditUrl      { get => _editUrl;      set => SetField(ref _editUrl, value); }
     public string EditNotes    { get => _editNotes;    set => SetField(ref _editNotes, value); }
 

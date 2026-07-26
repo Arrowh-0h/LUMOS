@@ -11,7 +11,7 @@ public partial class CreateVaultView : UserControl
     public CreateVaultView()
     {
         InitializeComponent();
-        Loaded += (_, _) => PasswordField.Focus();
+        Loaded += (_, _) => PasswordField.FocusField();
     }
 
     private void PasswordField_PasswordChanged(object sender, RoutedEventArgs e)

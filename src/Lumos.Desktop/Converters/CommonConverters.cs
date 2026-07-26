@@ -81,6 +81,32 @@ public sealed class StrengthScoreToWidthConverter : IValueConverter
 }
 
 /// <summary>
+/// Maps a zxcvbn score (0-4) to a star GridLength, for a strength meter built
+/// from two columns: the filled portion and the remainder.
+///
+/// Pass ConverterParameter="empty" for the unfilled column; anything else (or
+/// nothing) yields the filled column. Star sizing is used rather than a pixel
+/// width so the meter scales with whatever container it lands in — the entry
+/// forms sit inside a resizable panel, so a fixed width would be wrong the
+/// moment the window changes size.
+/// </summary>
+public sealed class StrengthScoreToStarsConverter : IValueConverter
+{
+    private const int MaxScore = 4;
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var score = value is int i ? Math.Clamp(i, 0, MaxScore) : 0;
+        var wantEmpty = string.Equals(parameter as string, "empty", StringComparison.OrdinalIgnoreCase);
+        var stars = wantEmpty ? MaxScore - score : score;
+        return new GridLength(stars, GridUnitType.Star);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+/// <summary>
 /// Converts a non-empty string to Visibility.Visible, empty/null to Collapsed.
 /// </summary>
 public sealed class StringToVisibilityConverter : IValueConverter

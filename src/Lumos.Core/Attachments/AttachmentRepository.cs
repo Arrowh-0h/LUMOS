@@ -12,7 +12,12 @@ namespace Lumos.Core.Attachments;
 public sealed class AttachmentRepository
 {
     /// <summary>Per-file size cap. Files larger than this are rejected on add.</summary>
-    public const long MaxFileSizeBytes = 25L * 1024 * 1024; // 25 MB
+    /// <summary>
+    /// Per-file cap. Raised from 25 MB in v2. This is a ceiling, not a
+    /// target: attachments are read fully into memory to be encrypted, so a
+    /// 50 MB file briefly costs well over 50 MB of managed heap.
+    /// </summary>
+    public const long MaxFileSizeBytes = 50L * 1024 * 1024; // 50 MB
 
     private readonly VaultService _vault;
 

@@ -3,7 +3,7 @@ namespace Lumos.Core.Attachments;
 /// <summary>
 /// Metadata for one stored attachment, WITHOUT its bytes. The list view and
 /// detail pane work with this lightweight record; the actual file content is
-/// fetched on demand (it can be up to 25 MB, so we don't want it loaded for
+/// fetched on demand (it can be up to 50 MB, so we don't want it loaded for
 /// every entry just to show a filename).
 /// </summary>
 public sealed record AttachmentInfo

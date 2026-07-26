@@ -4,6 +4,19 @@ using Lumos.Desktop.Common;
 
 namespace Lumos.Desktop.ViewModels;
 
+/// <summary>Carries post-unlock state the shell router needs to act on.</summary>
+public sealed class VaultUnlockedEventArgs : EventArgs
+{
+    public VaultUnlockedEventArgs(bool requiresRecoverySetup)
+        => RequiresRecoverySetup = requiresRecoverySetup;
+
+    /// <summary>
+    /// True when this vault has no recovery code yet — every vault created
+    /// before recovery existed, plus any where the user deferred the prompt.
+    /// </summary>
+    public bool RequiresRecoverySetup { get; }
+}
+
 public sealed class UnlockViewModel : ObservableObject
 {
     private string _errorMessage = "";
@@ -11,7 +24,10 @@ public sealed class UnlockViewModel : ObservableObject
     private int _remainingBackoffSeconds;
 
     /// <summary>Raised when the vault is successfully unlocked.</summary>
-    public event EventHandler? VaultUnlocked;
+    public event EventHandler<VaultUnlockedEventArgs>? VaultUnlocked;
+
+    /// <summary>Raised when the user wants the recovery-code reset flow.</summary>
+    public event EventHandler? ForgotPasswordRequested;
 
     public string ErrorMessage
     {
@@ -52,13 +68,26 @@ public sealed class UnlockViewModel : ObservableObject
             ? $"Too many failed attempts. Try again in {RemainingBackoffSeconds}s."
             : "";
 
+    /// <summary>
+    /// Only offer the recovery route when this vault actually has a recovery
+    /// code. Showing "forgot your password?" on a vault that cannot be
+    /// recovered would be a cruel thing to dangle in front of someone who has
+    /// just locked themselves out.
+    /// </summary>
+    public bool CanRecover => AppServices.VaultManager.HasRecovery;
+
     public RelayCommand UnlockCommand { get; }
+    public RelayCommand ForgotPasswordCommand { get; }
 
     public UnlockViewModel()
     {
         UnlockCommand = new RelayCommand(
             execute: param => _ = TryUnlockAsync(param as SecureString),
             canExecute: _ => !IsBusy && !IsBackoffActive);
+
+        ForgotPasswordCommand = new RelayCommand(
+            execute: () => ForgotPasswordRequested?.Invoke(this, EventArgs.Empty),
+            canExecute: () => !IsBusy);
     }
 
     private async Task TryUnlockAsync(SecureString? secureString)
@@ -74,7 +103,7 @@ public sealed class UnlockViewModel : ObservableObject
 
         try
         {
-            var plain = SecureStringToString(secureString);
+            var plain = SecureStringHelper.ToPlainText(secureString);
             UnlockResult result = await Task.Run(() => AppServices.VaultManager.Unlock(plain));
             // Best-effort scrub of the plain string — it's still on the managed
             // heap until GC, but we shorten its life as much as we reasonably can.
@@ -84,7 +113,8 @@ public sealed class UnlockViewModel : ObservableObject
             {
                 case UnlockStatus.Success:
                     AppServices.OpenVault = result.Service;
-                    VaultUnlocked?.Invoke(this, EventArgs.Empty);
+                    VaultUnlocked?.Invoke(this,
+                        new VaultUnlockedEventArgs(result.RequiresRecoverySetup));
                     break;
 
                 case UnlockStatus.WrongPassword:
@@ -133,21 +163,6 @@ public sealed class UnlockViewModel : ObservableObject
             await Task.Delay(1000);
             remaining--;
             RemainingBackoffSeconds = remaining;
-        }
-    }
-
-    private static string SecureStringToString(SecureString secure)
-    {
-        var bstr = IntPtr.Zero;
-        try
-        {
-            bstr = System.Runtime.InteropServices.Marshal.SecureStringToBSTR(secure);
-            return System.Runtime.InteropServices.Marshal.PtrToStringBSTR(bstr);
-        }
-        finally
-        {
-            if (bstr != IntPtr.Zero)
-                System.Runtime.InteropServices.Marshal.ZeroFreeBSTR(bstr);
         }
     }
 }

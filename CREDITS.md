@@ -41,15 +41,17 @@ backdoor would also be an attacker's backdoor.
 **Honesty over reassurance.**
 Lots of software overstates its security. Lumos tries to do the opposite. The
 threat model spells out what it does *not* protect against — a known master
-password, malware running on the same machine, a determined reverse-engineer
-defeating the (cosmetic) product key. These limits are inherent to any local
-password manager, so they're documented rather than hidden.
+password, malware running on the same machine, a compromised operating system.
+These limits are inherent to any local password manager, so they're documented
+rather than hidden.
 
-**The product key is "feels official," not protection.**
-Because the app is free, the activation key exists to make distribution feel
-deliberate, not to stop copying. The validation logic ships inside the app and
-.NET code can be decompiled, so a determined person could forge keys. That's
-fine, and it's stated plainly rather than dressed up as security.
+**Recovery without a backdoor.**
+Forgetting a master password used to mean losing the vault forever. v2 adds a
+generated recovery code that opens the same vault by a second, independent route.
+Every design that would have let the author restore someone's access was rejected
+on the same grounds: a door the developer can open is a door into every vault.
+So the honest consequence stands — lose both secrets and the data is gone, and
+nobody can help. That is stated plainly to users rather than softened.
 
 **Calm, sharp, serious design.**
 The interface went through a full visual pass toward a black-dominant, sharp-edged,
@@ -64,12 +66,11 @@ trustworthy rather than flashy.
 Lumos is a .NET 8 application split into clean layers:
 
 - **Lumos.Core** — all the logic: cryptography, the vault, entry types, the
-  password generator, time-based one-time passwords, attachments, licensing, and
+  password generator, time-based one-time passwords, attachments, recovery codes, and
   import/export. It has no UI dependencies, which keeps it testable and honest
   about where the real work happens.
 - **Lumos.Desktop** — the Windows interface (WPF), built in an MVVM style so the
   UI stays a thin layer over the Core logic.
-- **tools/keygen** — a small private utility for generating product keys.
 
 It's packaged with Velopack into a single self-contained installer, so users need
 nothing else installed — no runtime, no dependencies. Updates are delivered
@@ -84,7 +85,7 @@ Testing focused on the layer that matters most: the security-critical Core.
 - The Core logic is covered by an automated test suite (xUnit) spanning the
   cryptography, key derivation, the vault lifecycle, entry storage and search,
   the password generator, attachments, import/export round-trips, auto-lock
-  behavior, and product-key validation. Every release was checked against the
+  behavior, and recovery-code round-trips. Every release was checked against the
   full suite passing with zero failures.
 - The build was developed iteratively in phases, each one verified before moving
   on: build clean, tests green, then hands-on testing of the actual feature in

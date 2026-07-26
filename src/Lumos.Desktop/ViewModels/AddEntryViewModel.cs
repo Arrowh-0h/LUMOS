@@ -18,6 +18,7 @@ public sealed class AddEntryViewModel : ObservableObject
     private string _notes = "";
     private string _totpSecret = "";
     private string _errorMessage = "";
+    private PasswordCoaching? _coaching;
 
     /// <summary>Raised when an entry is successfully created. The string arg is the new entry id.</summary>
     public event EventHandler<string>? EntryAdded;
@@ -34,7 +35,32 @@ public sealed class AddEntryViewModel : ObservableObject
 
     public string Title       { get => _title;       set => SetField(ref _title, value); }
     public string Username    { get => _username;    set => SetField(ref _username, value); }
-    public string Password    { get => _password;    set => SetField(ref _password, value); }
+    public string Password
+    {
+        get => _password;
+        set
+        {
+            if (SetField(ref _password, value)) RefreshCoaching();
+        }
+    }
+
+    /// <summary>zxcvbn score 0-4, or 0 when the field is empty.</summary>
+    public int PasswordScore => _coaching?.Score ?? 0;
+
+    /// <summary>"Weak", "Strong", etc. Empty while the field is empty.</summary>
+    public string PasswordStrengthLabel => _coaching?.Label ?? "";
+
+    /// <summary>One line of concrete, non-blocking advice. Empty while the field is empty.</summary>
+    public string PasswordAdvice => _coaching?.Advice ?? "";
+
+    private void RefreshCoaching()
+    {
+        _coaching = PasswordCoach.Evaluate(_password);
+        OnPropertyChanged(nameof(PasswordScore));
+        OnPropertyChanged(nameof(PasswordStrengthLabel));
+        OnPropertyChanged(nameof(PasswordAdvice));
+    }
+
     public string Url         { get => _url;         set => SetField(ref _url, value); }
     public string Notes       { get => _notes;       set => SetField(ref _notes, value); }
 

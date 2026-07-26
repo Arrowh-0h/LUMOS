@@ -5,6 +5,8 @@
              xmlns:conv="clr-namespace:Lumos.Desktop.Converters">
     <UserControl.Resources>
         <conv:StringToVisibilityConverter x:Key="StringToVisibility"/>
+        <conv:StrengthScoreToBrushConverter x:Key="ScoreToBrush"/>
+        <conv:StrengthScoreToStarsConverter x:Key="ScoreToStars"/>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
         <conv:InvertBoolToVisibilityConverter x:Key="InvertBoolToVisibility"/>
         <conv:BytesToImageConverter x:Key="BytesToImage"/>
@@ -445,7 +447,32 @@
                                 <TextBox Style="{StaticResource LumosTextBox}"
                                          Text="{Binding EditPassword, UpdateSourceTrigger=PropertyChanged}"
                                          FontFamily="{StaticResource MonoFontFamily}"
-                                         Margin="0,0,0,12"/>
+                                         Margin="0,0,0,8"/>
+
+                                <!-- Strength coaching. Advisory only: Lumos never blocks a save
+                                     because a stored password is weak. Plenty of entries are weak by
+                                     necessity (a router PIN, a system that caps you at 8 characters). -->
+                                <Grid Margin="0,0,0,4" Height="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="{Binding EditPasswordScore, Converter={StaticResource ScoreToStars}}"/>
+                                        <ColumnDefinition Width="{Binding EditPasswordScore, Converter={StaticResource ScoreToStars}, ConverterParameter=empty}"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Background="{Binding EditPasswordScore, Converter={StaticResource ScoreToBrush}}"/>
+                                    <Border Grid.Column="1" Background="{StaticResource BorderBrush}"/>
+                                </Grid>
+                                <TextBlock Style="{StaticResource SecondaryText}"
+                                           FontFamily="{StaticResource MonoFontFamily}"
+                                           FontSize="11"
+                                           Margin="0,4,0,2"
+                                           Text="{Binding EditPasswordStrengthLabel}"
+                                           Foreground="{Binding EditPasswordScore, Converter={StaticResource ScoreToBrush}}"
+                                           Visibility="{Binding EditPasswordStrengthLabel, Converter={StaticResource StringToVisibility}}"/>
+                                <TextBlock Style="{StaticResource SecondaryText}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,12"
+                                           Text="{Binding EditPasswordAdvice}"
+                                           Visibility="{Binding EditPasswordAdvice, Converter={StaticResource StringToVisibility}}"/>
 
                                 <TextBlock Text="TOTP SECRET (BASE32 OR OTPAUTH:// URI — LEAVE BLANK FOR NONE)"
                                            Style="{StaticResource MonoLabel}" Margin="0,0,0,6"/>
@@ -550,7 +577,32 @@
                     <TextBox Style="{StaticResource LumosTextBox}"
                              Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
                              FontFamily="{StaticResource MonoFontFamily}"
-                             Margin="0,0,0,12"/>
+                             Margin="0,0,0,8"/>
+
+                    <!-- Strength coaching. Advisory only: Lumos never blocks a save
+                         because a stored password is weak. Plenty of entries are weak by
+                         necessity (a router PIN, a system that caps you at 8 characters). -->
+                    <Grid Margin="0,0,0,4" Height="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{Binding PasswordScore, Converter={StaticResource ScoreToStars}}"/>
+                            <ColumnDefinition Width="{Binding PasswordScore, Converter={StaticResource ScoreToStars}, ConverterParameter=empty}"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="{Binding PasswordScore, Converter={StaticResource ScoreToBrush}}"/>
+                        <Border Grid.Column="1" Background="{StaticResource BorderBrush}"/>
+                    </Grid>
+                    <TextBlock Style="{StaticResource SecondaryText}"
+                               FontFamily="{StaticResource MonoFontFamily}"
+                               FontSize="11"
+                               Margin="0,4,0,2"
+                               Text="{Binding PasswordStrengthLabel}"
+                               Foreground="{Binding PasswordScore, Converter={StaticResource ScoreToBrush}}"
+                               Visibility="{Binding PasswordStrengthLabel, Converter={StaticResource StringToVisibility}}"/>
+                    <TextBlock Style="{StaticResource SecondaryText}"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,12"
+                               Text="{Binding PasswordAdvice}"
+                               Visibility="{Binding PasswordAdvice, Converter={StaticResource StringToVisibility}}"/>
 
                     <TextBlock Text="TOTP SECRET (OPTIONAL)" Style="{StaticResource MonoLabel}" Margin="0,0,0,6"/>
                     <TextBox Style="{StaticResource LumosTextBox}"

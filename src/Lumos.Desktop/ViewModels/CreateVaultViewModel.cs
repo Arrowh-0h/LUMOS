@@ -4,6 +4,19 @@ using Lumos.Desktop.Common;
 
 namespace Lumos.Desktop.ViewModels;
 
+/// <summary>Carries the recovery code issued alongside a newly created vault.</summary>
+public sealed class VaultCreatedEventArgs : EventArgs
+{
+    public VaultCreatedEventArgs(string? recoveryCode) => RecoveryCode = recoveryCode;
+
+    /// <summary>
+    /// The one-time recovery code, or null if issuing it failed. Null is not
+    /// fatal — the vault exists and works; the user is simply prompted again
+    /// at their next unlock.
+    /// </summary>
+    public string? RecoveryCode { get; }
+}
+
 public sealed class CreateVaultViewModel : ObservableObject
 {
     private string _errorMessage = "";
@@ -12,7 +25,7 @@ public sealed class CreateVaultViewModel : ObservableObject
     private int _strengthScore;       // 0..4 from zxcvbn
     private string _strengthLabel = "";
 
-    public event EventHandler? VaultCreated;
+    public event EventHandler<VaultCreatedEventArgs>? VaultCreated;
 
     public string ErrorMessage
     {
@@ -105,7 +118,7 @@ public sealed class CreateVaultViewModel : ObservableObject
             return;
         }
 
-        if (!SecureStringsEqual(password, confirmation))
+        if (!SecureStringHelper.AreEqual(password, confirmation))
         {
             ErrorMessage = "The two master passwords don't match.";
             return;
@@ -116,7 +129,7 @@ public sealed class CreateVaultViewModel : ObservableObject
 
         try
         {
-            var plain = SecureStringToString(password);
+            var plain = SecureStringHelper.ToPlainText(password);
             var validation = MasterPasswordPolicy.Validate(plain);
             if (!validation.IsAllowed)
             {
@@ -124,14 +137,25 @@ public sealed class CreateVaultViewModel : ObservableObject
                 return;
             }
 
+            // Create the vault, then immediately issue a recovery code while we
+            // still hold the master password. Doing both here means the plain
+            // text never has to survive a screen transition.
+            string? recoveryCode = null;
             await Task.Run(() =>
             {
                 var service = AppServices.VaultManager.CreateVault(plain);
                 AppServices.OpenVault = service;
+
+                // Best-effort: a vault without a recovery code is still a
+                // perfectly usable vault, so a failure here must not undo a
+                // successful creation. The user gets prompted again on their
+                // next unlock.
+                var setup = AppServices.VaultManager.SetUpRecovery(plain);
+                if (setup.Success) recoveryCode = setup.Code;
             });
             plain = string.Empty;
 
-            VaultCreated?.Invoke(this, EventArgs.Empty);
+            VaultCreated?.Invoke(this, new VaultCreatedEventArgs(recoveryCode));
         }
         catch (Exception ex)
         {
@@ -143,42 +167,4 @@ public sealed class CreateVaultViewModel : ObservableObject
         }
     }
 
-    private static string SecureStringToString(SecureString secure)
-    {
-        var bstr = IntPtr.Zero;
-        try
-        {
-            bstr = System.Runtime.InteropServices.Marshal.SecureStringToBSTR(secure);
-            return System.Runtime.InteropServices.Marshal.PtrToStringBSTR(bstr);
-        }
-        finally
-        {
-            if (bstr != IntPtr.Zero)
-                System.Runtime.InteropServices.Marshal.ZeroFreeBSTR(bstr);
-        }
-    }
-
-    private static bool SecureStringsEqual(SecureString a, SecureString b)
-    {
-        if (a.Length != b.Length) return false;
-        var bstrA = IntPtr.Zero;
-        var bstrB = IntPtr.Zero;
-        try
-        {
-            bstrA = System.Runtime.InteropServices.Marshal.SecureStringToBSTR(a);
-            bstrB = System.Runtime.InteropServices.Marshal.SecureStringToBSTR(b);
-            for (int i = 0; i < a.Length; i++)
-            {
-                var charA = System.Runtime.InteropServices.Marshal.ReadInt16(bstrA, i * 2);
-                var charB = System.Runtime.InteropServices.Marshal.ReadInt16(bstrB, i * 2);
-                if (charA != charB) return false;
-            }
-            return true;
-        }
-        finally
-        {
-            if (bstrA != IntPtr.Zero) System.Runtime.InteropServices.Marshal.ZeroFreeBSTR(bstrA);
-            if (bstrB != IntPtr.Zero) System.Runtime.InteropServices.Marshal.ZeroFreeBSTR(bstrB);
-        }
-    }
 }

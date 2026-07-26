@@ -5,12 +5,30 @@ namespace Lumos.Core.Crypto;
 /// so the app can derive the same key on future loads, and so future versions
 /// can upgrade parameters without breaking existing vaults.
 ///
-/// Spec defaults (v1):
-///   memory     = 64 MB  (64 * 1024 KB)
-///   iterations = 3
+/// Defaults (v2):
+///   memory     = 256 MB  (256 * 1024 KB)
+///   iterations = 4
 ///   parallelism= 4
 ///   salt       = 16 random bytes per vault
 ///   keyLength  = 32 bytes (256 bits, for SQLCipher AES-256)
+///
+/// Raised from v1's 64 MB / t=3 in v2. Rationale: the unlock backoff only slows
+/// someone typing into the UI — an attacker who copies vault.db and its header
+/// ignores it entirely and grinds Argon2id offline on a GPU. KDF cost is the
+/// only defence that applies in that case, and it is the attacker's cost per
+/// guess. Quadrupling memory quadruples their hardware bill; for the user it
+/// means roughly a 1-2 second unlock, which is an acceptable trade for a vault
+/// opened a handful of times a day.
+///
+/// PER-VAULT, NOT GLOBAL. These values are written into each vault's header, so
+/// changing them here affects only newly created vaults and vaults whose
+/// password is changed afterwards. Existing vaults keep deriving with the
+/// parameters recorded in their own header and continue to open normally.
+///
+/// Upper bound on raising this further: 256 MB must be allocatable on the
+/// weakest machine we support. Konscious's Argon2 is a pure managed
+/// implementation, so this is a managed-heap allocation held for the duration
+/// of the derivation.
 /// </summary>
 public sealed record KdfParameters(
     int MemoryKb,
@@ -19,14 +37,14 @@ public sealed record KdfParameters(
     byte[] Salt,
     int KeyLengthBytes)
 {
-    public const int DefaultMemoryKb = 64 * 1024;     // 64 MB
-    public const int DefaultIterations = 3;
+    public const int DefaultMemoryKb = 256 * 1024;    // 256 MB
+    public const int DefaultIterations = 4;
     public const int DefaultParallelism = 4;
     public const int DefaultSaltBytes = 16;
     public const int DefaultKeyLengthBytes = 32;       // 256-bit key
 
     /// <summary>
-    /// Create a fresh KdfParameters with a new random salt and the v1 defaults.
+    /// Create a fresh KdfParameters with a new random salt and the current defaults.
     /// </summary>
     public static KdfParameters CreateDefault()
     {
